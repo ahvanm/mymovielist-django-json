@@ -11,6 +11,7 @@ urlpatterns = [
     path('query_movie', views.query_movie, name = 'query_movie'),
     path('list_summary/', views.list_summary, name="list_summary"),
     path('filter_movies/', views.filter_movies, name="filter_movies"),
+    path('filter_person_credits/', views.filter_person_credits, name="filter_person_credits"),
     path('view_movie_info/<movie_id>', views.view_movie_info, name="view_movie_info"),
     path('update_movie/<movie_id>', views.update_movie, name="update_movie"),
     path('delete_movie/<movie_id>', views.delete_movie, name="delete_movie"),

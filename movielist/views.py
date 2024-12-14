@@ -1,5 +1,5 @@
 from datetime import datetime
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_list_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.db import connection, transaction
 from django.db.models import Avg, Max, Min
@@ -62,7 +62,7 @@ def display_home(request):
     
     empty_list = False
     movielist = list(ListEntry.objects.filter(user_id=get_user_id(request)))
-
+    
     if (len(movielist) <= 0):
         empty_list = True
         return render(request, 'home.html', {'empty_list': empty_list})
@@ -74,6 +74,8 @@ def display_home(request):
         if entry.movie_title == None:
             entry.movie_title = build_movie_dict(request, entry.movie_id)['title']
             entry.save()
+        
+        # add_people_to_database(entry)
 
     get_movies = sorted(list(movielist), key=lambda d: d.rating, reverse=True)
     returndict = {
@@ -97,6 +99,41 @@ def update_poster_path(request, movie_id, poster_extension):
 
     return HttpResponseRedirect('/movielist/home')
 
+
+def filter_person_credits(request):
+    if request.method == "POST":
+        person_query = request.POST['person_query']
+        person_query = str.lower(person_query)
+
+        with transaction.atomic(), connection.cursor() as cursor:
+            cursor.execute("""
+                select le.*
+                from (select * from movielist_listentry l where l.user_id = %s) as le
+                join movielist_associatedwith aw on le.movie_id = aw.movie_id
+                join movielist_person p on aw.person_id = p.id
+                where lower(p.name) like %s
+            """, [get_user_id(request), f"%{person_query}%"])
+            fm = list(cursor.fetchall())
+            filtered_movies = []
+
+            for m in fm:
+                movie_d = {"id": m[0], "movie_id": m[1], "rating": m[2], "date_watched": m[3], "comments": m[4], "user": m[5], "poster_url": m[6], "movie_title": m[7]}
+                filtered_movies.append(movie_d)
+
+            cursor.execute("""
+                select p.name
+                from movielist_person p
+                where lower(p.name) like %s
+            """, [f"%{person_query}%"])
+            people = cursor.fetchall()
+
+            no_result = len(people) == 0 and len(filtered_movies) == 0
+            filtered_movies = sorted(list(filtered_movies), key=lambda d: d['rating'], reverse=True)
+
+        return render(request, 'home.html', {'no_result': no_result, 'people': people, 'movielist': filtered_movies})
+    else:
+        return HttpResponseRedirect('/movielist/home')
+    
 
 def filter_movies(request):
     if request.method == "POST":
@@ -185,7 +222,7 @@ def view_movie_info(request, movie_id):
     
     with transaction.atomic(), connection.cursor() as cursor:
         movie_dict = build_movie_dict(request, movie_id)
-        actors = get_movie_actors(movie_id)
+        actors = get_movie_actors(movie_id, 5)
         posters = get_movie_posters(movie_id)
         
     returndict = {
@@ -257,6 +294,8 @@ def add_movie(request, id, poster_extension, title):
                 entry.movie_title = title
                 entry.poster_url = "https://image.tmdb.org/t/p/w500/" + poster_extension
 
+                add_people_to_database(entry)
+
             entry.save()
             return redirect('display_home')
     else:
@@ -272,15 +311,38 @@ def add_movie(request, id, poster_extension, title):
     return render(request, 'add_movie.html', returndict)
 
 
-def get_movie_actors(movie_id):
+def add_people_to_database(entry):
+    actors = get_movie_actors(entry.movie_id)
+    for a in actors:
+        p = Person.objects.filter(id=a['id'], name=a['name'])
+        if len(p) == 0:
+            p = Person(id=a['id'], name=a['name'])
+            p.save()
+
+        aw = AssociatedWith.objects.filter(person_id=a['id'], movie_id=entry.movie_id)
+        if len(aw) == 0:
+            aw = AssociatedWith(person_id=a['id'], movie_id=entry.movie_id)
+            aw.save()
+    
+    crew = get_movie_crew(entry.movie_id)
+    for c in crew:
+        p = Person.objects.filter(id=c['id'], name=c['name'])
+        if len(p) == 0:
+            p = Person(id=c['id'], name=c['name'])
+            p.save()
+
+        aw = AssociatedWith.objects.filter(person_id=c['id'], movie_id=entry.movie_id)
+        if len(aw) == 0:
+            aw = AssociatedWith(person_id=c['id'], movie_id=entry.movie_id)
+            aw.save()
+
+
+def get_movie_actors(movie_id, count = -1):
     url = f"https://api.themoviedb.org/3/movie/{movie_id}/credits?language=en-US"
     actors = requests.get(url, headers=get_tmdb_headers()).json()
 
     get_actors = []
-    upper_bound = len(actors['cast'])
-
-    if (upper_bound > 5):
-        upper_bound = 5
+    upper_bound = len(actors['cast']) if count <= 0 else count
 
     for i in range(0, upper_bound):
         path = actors['cast'][i]['profile_path']
@@ -291,7 +353,33 @@ def get_movie_actors(movie_id):
             path = "https://image.tmdb.org/t/p/w500" + str(path)
 
         actor_info = {
+            'id': actors['cast'][i]['id'],
             'name': actors['cast'][i]['name'],
+            'profile_path': path
+        }
+        get_actors.append(actor_info)
+    
+    return get_actors
+
+
+def get_movie_crew(movie_id, count = -1):
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}/credits?language=en-US"
+    actors = requests.get(url, headers=get_tmdb_headers()).json()
+
+    get_actors = []
+    upper_bound = len(actors['crew']) if count <= 0 else count
+
+    for i in range(0, upper_bound):
+        path = actors['crew'][i]['profile_path']
+
+        if path == None:
+            path = "https://www.theyta.com/profiles/profile_placeholder.png"
+        else:
+            path = "https://image.tmdb.org/t/p/w500" + str(path)
+
+        actor_info = {
+            'id': actors['crew'][i]['id'],
+            'name': actors['crew'][i]['name'],
             'profile_path': path
         }
         get_actors.append(actor_info)

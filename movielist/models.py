@@ -32,3 +32,29 @@ class ListEntry(models.Model):
         indexes = [
             models.Index(fields=['user', 'movie_id'])
         ]
+
+
+class Person(models.Model):
+    id = models.CharField(max_length=255, primary_key=True)
+    name = models.CharField(max_length=255)
+
+    def __str__(self) -> str:
+        return f"({self.name}: '{self.id})'"
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['id', 'name'])
+        ]
+
+
+class AssociatedWith(models.Model):
+    person = models.ForeignKey(Person, on_delete = models.CASCADE)
+    movie_id = models.CharField(max_length=255)
+
+    def __str__(self) -> str:
+        return f"(Movie {self.movie_id}: '{self.person})'"
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['person', 'movie_id'])
+        ]

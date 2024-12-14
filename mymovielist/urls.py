@@ -20,13 +20,14 @@ from django.contrib import admin
 from django.urls import path, include
 from . import views
 # import debug_toolbar
+from django.conf.urls.static import static
 
 admin.site.site_header = 'MovieList Admin'
 admin.site.index_title = 'Admin'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name='index'),
+    # path('', views.index, name='index'),
     path('movielist/', include('movielist.urls')),
     path('users/', include('django.contrib.auth.urls')),
     path('users/', include('users.urls')),
@@ -35,5 +36,5 @@ urlpatterns = [
     # path('__debug__/', include(debug_toolbar.urls)),
 ]
 
-# urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

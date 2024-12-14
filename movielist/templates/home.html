@@ -37,13 +37,24 @@
                     <input class="form-control me-2" type="search" placeholder="Filter movies watched before a certain date (MM-DD-YYYY)" aria-label="Search" name="filtered2">
                     <button class = "btn btn-outline-secondary" type = "submit">Search</button>
                 </form>
-                {% if filtered or filtered2 %}
+                <br/>
+                <form class="d-flex" method=POST action="{% url 'filter_person_credits' %}">
+                    {% csrf_token %}
+                    <input class="form-control me-2" type="search" placeholder="Filter movies featuring a certain artist" aria-label="Search" name="person_query">
+                    <button class = "btn btn-outline-secondary" type = "submit">Search</button>
+                </form>
+                {% if filtered or filtered2 or people %}
                     <br/>
                     <a href="{% url 'display_home' %}" class="btn btn-secondary">Back</a>
                     <br/>
                     <br/>
                     {% if no_result == True %}
-                        <h4>You have no films seen in the range you provided.</h4>
+                        <h4>You have no films seen with the filtering settings you provided.</h4>
+                    {% elif people %}
+                        <h4>Movies in your list featuring:</h4>
+                        {% for p in people %}
+                            <p>{{ p.0 }}</p>
+                        {% endfor %}
                     {% else %}
                         <h4>Filtering results:</h4>
                     {% endif %}
