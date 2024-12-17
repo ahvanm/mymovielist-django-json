@@ -176,7 +176,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOWED_ORIGINS = ['https://mymovielist-react.vercel.app', "http://localhost:5173",]
+CORS_ALLOWED_ORIGINS = ['https://mymovielist-react.vercel.app', 'https://mymovielist-django-api.vercel.app/', "http://localhost:5173",]
 
 # Allow specific HTTP methods
 CORS_ALLOW_METHODS = [
