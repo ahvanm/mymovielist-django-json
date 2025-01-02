@@ -20,7 +20,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .kmeans import KMeansCluster
+# from .kmeans import KMeansCluster
 
 class ListEntryViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -208,8 +208,8 @@ def list_summary(request):
             title = build_movie_dict(request, movie.movie_id)['title']
             max_rating_list.append(title)
 
-        kmeans = KMeansCluster(user_id=user_id, output_folder='kmeans_results')
-        kmeans.df_summary_stats()
+        # kmeans = KMeansCluster(user_id=user_id, output_folder='kmeans_results')
+        # kmeans.df_summary_stats()
 
     returndict = {
         'searched': "",
