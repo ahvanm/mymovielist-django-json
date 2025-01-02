@@ -20,6 +20,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
+from .kmeans import KMeansCluster
+
 class ListEntryViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = DefaultPagination
@@ -183,16 +185,18 @@ def list_summary(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('/movielist/home')
     
+    user_id = get_user_id(request)
+
     with transaction.atomic(), connection.cursor() as cursor:
-        cursor.execute("SELECT MIN(rating) FROM movielist_listentry le WHERE user_id = %s", [get_user_id(request)])
+        cursor.execute("SELECT MIN(rating) FROM movielist_listentry le WHERE user_id = %s", [user_id])
         min_rating = cursor.fetchone()[0]
-        cursor.execute("SELECT MAX(rating) FROM movielist_listentry le WHERE user_id = %s", [get_user_id(request)])
+        cursor.execute("SELECT MAX(rating) FROM movielist_listentry le WHERE user_id = %s", [user_id])
         max_rating = cursor.fetchone()[0]
-        cursor.execute("SELECT AVG(rating) FROM movielist_listentry le WHERE user_id = %s", [get_user_id(request)])
+        cursor.execute("SELECT AVG(rating) FROM movielist_listentry le WHERE user_id = %s", [user_id])
         avg_rating = cursor.fetchone()[0]
     
-        min_rating_movies = ListEntry.objects.filter(rating=min_rating, user_id=get_user_id(request))
-        max_rating_movies = ListEntry.objects.filter(rating=max_rating, user_id=get_user_id(request))
+        min_rating_movies = ListEntry.objects.filter(rating=min_rating, user_id=user_id)
+        max_rating_movies = ListEntry.objects.filter(rating=max_rating, user_id=user_id)
 
         min_rating_list = []
         for movie in min_rating_movies:
@@ -203,6 +207,9 @@ def list_summary(request):
         for movie in max_rating_movies:
             title = build_movie_dict(request, movie.movie_id)['title']
             max_rating_list.append(title)
+
+        kmeans = KMeansCluster(user_id=user_id, output_folder='kmeans_results')
+        kmeans.df_summary_stats()
 
     returndict = {
         'searched': "",

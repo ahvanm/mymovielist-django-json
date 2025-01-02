@@ -166,7 +166,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'movielist.pagination.DefaultPagination',
-    'PAGE_SIZE': 30,
+    'PAGE_SIZE': 60,
 }
 
 SIMPLE_JWT = {
@@ -176,7 +176,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOWED_ORIGINS = ['https://mymovielist-react.vercel.app', 'https://mymovielist-django-api.vercel.app/', "http://localhost:5173",]
+CORS_ALLOWED_ORIGINS = ['https://mymovielist-react.vercel.app', 'https://mymovielist-django-api.vercel.app', "http://localhost:5173",]
 
 # Allow specific HTTP methods
 CORS_ALLOW_METHODS = [
