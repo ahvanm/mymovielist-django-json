@@ -10,3 +10,8 @@ class ListEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ListEntry
         fields = ['id', 'user', 'movie_id', 'movie_title', 'rating', 'date_watched', 'comments', 'poster_url']
+
+class EntryIDSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListEntry
+        fields = ['id', 'movie_id', 'movie_title']

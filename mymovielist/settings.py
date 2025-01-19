@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 
 import dj_database_url
-# import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -110,10 +109,10 @@ DATABASES = {
 }
 
 # Only include for Vercel
-DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
-DATABASES['default']['OPTIONS']['charset'] = 'utf8mb4'
-del DATABASES['default']['OPTIONS']['sslmode'] 
-DATABASES['default']['OPTIONS']['ssl'] =  {'ca': os.environ.get('MYSQL_ATTR_SSL_CA')}
+# DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+# DATABASES['default']['OPTIONS']['charset'] = 'utf8mb4'
+# del DATABASES['default']['OPTIONS']['sslmode'] 
+# DATABASES['default']['OPTIONS']['ssl'] =  {'ca': os.environ.get('MYSQL_ATTR_SSL_CA')}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -176,7 +175,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOWED_ORIGINS = ['https://mymovielist-react.vercel.app', 'https://mymovielist-django-api.vercel.app', "http://localhost:5173",]
+CORS_ALLOWED_ORIGINS = ['https://mymovielist-react.vercel.app', 'https://mymovielist-django-api.vercel.app', "http://localhost:5173", "http://35.94.182.221"]
 
 # Allow specific HTTP methods
 CORS_ALLOW_METHODS = [

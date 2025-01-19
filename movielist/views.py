@@ -10,17 +10,48 @@ import requests
 import urllib.parse
 
 
-from movielist.serializers import ListEntrySerializer, UserSerializer
+from movielist.serializers import *
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet, ReadOnlyModelViewSet
 from .pagination import DefaultPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 # from .kmeans import KMeansCluster
+
+class EntryID:
+    movie_id = 0
+
+
+class PersonCreditsViewSet(ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    serializer_class = ListEntrySerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    ordering_fields = ['rating', 'date_watched', 'movie_title']
+    search_fields = ['movie_title']
+
+    def get_queryset(self):
+        # user = self.request.user
+        person_id = self.request.query_params.get('person_id')
+        print('person_id is ', person_id)
+
+        # with transaction.atomic(), cursor.connection() as cursor:
+            # cursor.execute()
+            # credits_list = cursor.fetchall()
+        credits_list = ListEntry.objects.raw("""
+            with aw as (
+                select * from movielist_associatedwith maw where maw.person_id = %s
+            )
+            select le.* from movielist_person p join aw on p.id = aw.person_id join movielist_listentry le on aw.movie_id = le.movie_id where le.user_id = %s
+        """, [person_id, get_user_id(self.request)])
+        print(credits_list)
+
+        return credits_list
+
 
 class ListEntryViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -29,6 +60,40 @@ class ListEntryViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     ordering_fields = ['rating', 'date_watched', 'movie_title']
     search_fields = ['rating', 'date_watched', 'movie_title']
+
+    def get_queryset(self):
+        user = self.request.user
+        return ListEntry.objects.filter(user_id=user.id)
+    
+    def create(self, request, *args, **kwargs):
+        # Custom behavior before saving the entry
+        data = request.data
+        user = request.user
+
+        # Example: Check if a similar entry already exists
+        if ListEntry.objects.filter(user_id=user.id, movie_id=data.get('movie_id')).exists():
+            return Response(
+                {"detail": "You already have an entry for this movie."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Add any other database operations or logic here
+        # print(data)
+        entry = EntryID()
+        setattr(entry, 'movie_id', data.get('movie_id'))
+        add_people_to_database(entry)
+        
+        # Call the default `create` behavior to save the object
+        return super().create(request, *args, **kwargs)
+    
+
+class EntryIDViewSet(ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    serializer_class = EntryIDSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    ordering_fields = ['movie_title']
+    search_fields = ['movie_id', 'movie_title']
 
     def get_queryset(self):
         user = self.request.user
@@ -114,7 +179,7 @@ def filter_person_credits(request):
                 join movielist_associatedwith aw on le.movie_id = aw.movie_id
                 join movielist_person p on aw.person_id = p.id
                 where lower(p.name) like %s
-            """, [get_user_id(request), f"%{person_query}%"])
+            """, [get_user_id(request), f"{person_query}%"])
             fm = list(cursor.fetchall())
             filtered_movies = []
 
@@ -126,7 +191,7 @@ def filter_person_credits(request):
                 select p.name
                 from movielist_person p
                 where lower(p.name) like %s
-            """, [f"%{person_query}%"])
+            """, [f"{person_query}%"])
             people = cursor.fetchall()
 
             no_result = len(people) == 0 and len(filtered_movies) == 0
