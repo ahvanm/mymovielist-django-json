@@ -26,6 +26,16 @@ class EntryID:
     movie_id = 0
 
 
+class BioViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    serializer_class = BioSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return User.objects.filter(id=user.id)
+    
+
 class PersonCreditsViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = None
@@ -39,16 +49,13 @@ class PersonCreditsViewSet(ReadOnlyModelViewSet):
         person_id = self.request.query_params.get('person_id')
         print('person_id is ', person_id)
 
-        # with transaction.atomic(), cursor.connection() as cursor:
-            # cursor.execute()
-            # credits_list = cursor.fetchall()
         credits_list = ListEntry.objects.raw("""
             with aw as (
                 select * from movielist_associatedwith maw where maw.person_id = %s
             )
             select le.* from movielist_person p join aw on p.id = aw.person_id join movielist_listentry le on aw.movie_id = le.movie_id where le.user_id = %s
         """, [person_id, get_user_id(self.request)])
-        print(credits_list)
+        # print(credits_list)
 
         return credits_list
 
@@ -83,7 +90,7 @@ class ListEntryViewSet(ModelViewSet):
         setattr(entry, 'movie_id', data.get('movie_id'))
         add_people_to_database(entry)
         
-        # Call the default `create` behavior to save the object
+        # Call the default 'create' behavior to save the object
         return super().create(request, *args, **kwargs)
     
 

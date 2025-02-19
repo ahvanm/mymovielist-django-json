@@ -15,3 +15,8 @@ class EntryIDSerializer(serializers.ModelSerializer):
     class Meta:
         model = ListEntry
         fields = ['id', 'movie_id', 'movie_title']
+    
+class BioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'bio']

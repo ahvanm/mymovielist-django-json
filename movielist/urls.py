@@ -6,6 +6,7 @@ router = routers.DefaultRouter()
 router.register('list-entries', views.ListEntryViewSet, basename='list-entries')
 router.register('entry-ids', views.EntryIDViewSet, basename='entry-ids')
 router.register('person-credits', views.PersonCreditsViewSet, basename='person-credits')
+router.register('bio', views.BioViewSet, basename='bio')
 
 urlpatterns = [
     path('home/', views.display_home, name = 'display_home'),
