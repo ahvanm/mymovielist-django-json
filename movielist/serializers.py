@@ -20,3 +20,21 @@ class BioSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'bio']
+
+class FavPersonSerializer(serializers.ModelSerializer):
+    person_name = serializers.CharField(source='person.name', read_only=True)
+    
+    class Meta:
+        model = FavPerson
+        fields = ['id', 'user', 'person', 'person_name', 'profile_url']
+        read_only_fields = ['user']
+
+class FavFilmsOfPersonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavFilmsOfPerson
+        fields = ['id', 'favPerson', 'listEntry']
+
+class FavFilmSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavFilm
+        fields = ['id', 'listEntry']

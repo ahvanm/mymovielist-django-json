@@ -6,6 +6,9 @@ router = routers.DefaultRouter()
 router.register('list-entries', views.ListEntryViewSet, basename='list-entries')
 router.register('entry-ids', views.EntryIDViewSet, basename='entry-ids')
 router.register('person-credits', views.PersonCreditsViewSet, basename='person-credits')
+router.register('fav-persons', views.FavPersonViewSet, basename='fav-persons')
+router.register('fav-films-of-person', views.FavFilmsOfPersonViewSet, basename='fav-films-of-person')
+router.register('fav-films', views.FavFilmViewSet, basename='fav-films')
 router.register('bio', views.BioViewSet, basename='bio')
 
 urlpatterns = [

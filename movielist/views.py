@@ -34,6 +34,57 @@ class BioViewSet(ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         return User.objects.filter(id=user.id)
+
+
+class FavFilmsOfPersonViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    serializer_class = FavFilmsOfPersonSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        person_id = self.request.query_params.get('person_id')
+        print(person_id)
+        if person_id == None:
+            return FavFilmsOfPerson.objects.filter(listEntry__user_id=user.id)
+        return FavFilmsOfPerson.objects.filter(listEntry__user_id=user.id, favPerson__person_id=person_id)
+
+    def create(self, request, *args, **kwargs):
+        print(request.data)
+        return super().create(request, *args, **kwargs)
+
+
+class FavPersonViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    serializer_class = FavPersonSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        person_id = self.request.query_params.get('person_id')
+        print(person_id)
+        if person_id == None:
+            return FavPerson.objects.filter(user_id=user.id)
+        return FavPerson.objects.filter(user_id=user.id, person_id=person_id)
+    
+    def perform_create(self, serializer):
+        user = User.objects.get(id=self.request.user.id)
+        serializer.save(user=user)
+
+    def create(self, request, *args, **kwargs):
+        print(request.data)
+        
+        return super().create(request, *args, **kwargs)
+    
+
+class FavFilmViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    serializer_class = FavFilmSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return FavFilm.objects.filter(listEntry__user_id=user.id)
     
 
 class PersonCreditsViewSet(ReadOnlyModelViewSet):
@@ -45,7 +96,6 @@ class PersonCreditsViewSet(ReadOnlyModelViewSet):
     search_fields = ['movie_title']
 
     def get_queryset(self):
-        # user = self.request.user
         person_id = self.request.query_params.get('person_id')
         print('person_id is ', person_id)
 
@@ -85,7 +135,6 @@ class ListEntryViewSet(ModelViewSet):
             )
 
         # Add any other database operations or logic here
-        # print(data)
         entry = EntryID()
         setattr(entry, 'movie_id', data.get('movie_id'))
         add_people_to_database(entry)

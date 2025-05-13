@@ -17,6 +17,33 @@ class User(models.Model):
         ordering = ['username', 'first_name', 'last_name']
 
 
+class FavPerson(models.Model):
+    user = models.ForeignKey('User', on_delete = models.CASCADE)
+    person = models.ForeignKey('Person', on_delete = models.CASCADE)
+    profile_url = models.CharField(max_length=255, null = True)
+
+    def __str__(self) -> str:
+        return f"{self.user.username} FavPerson: '{self.person.name}'"
+    
+
+class FavFilmsOfPerson(models.Model):
+    favPerson = models.ForeignKey('FavPerson', on_delete = models.CASCADE)
+    listEntry = models.ForeignKey('ListEntry', on_delete = models.CASCADE)
+
+    def __str__(self) -> str:
+        username = self.favPerson.user.username
+        person = self.favPerson.person.name
+        movie = self.listEntry.movie_title
+        return f"{username} FavFilmOfPerson: '{person}', Movie {movie}"
+    
+
+class FavFilm(models.Model):
+    listEntry = models.ForeignKey('ListEntry', on_delete = models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.listEntry.user.username} FavFilms: {self.listEntry.movie_title}"
+
+
 class ListEntry(models.Model):
     user = models.ForeignKey('User', on_delete = models.CASCADE)
     movie_id = models.CharField(max_length=255)
@@ -40,7 +67,7 @@ class Person(models.Model):
     name = models.CharField(max_length=255)
 
     def __str__(self) -> str:
-        return f"({self.name}: '{self.id})'"
+        return f"({self.name}: '{self.id}')"
     
     class Meta:
         indexes = [
