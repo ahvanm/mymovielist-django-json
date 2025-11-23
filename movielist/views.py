@@ -58,14 +58,22 @@ class FavPersonViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = None
     serializer_class = FavPersonSerializer
+    # ordering_fields = ['fav_film_count'] # don't need
 
     def get_queryset(self):
         user = self.request.user
         person_id = self.request.query_params.get('person_id')
-        print(person_id)
+
+        # Debugging purposes (no authentication)
+        # if not self.request.user.is_authenticated:
+        #     return FavPerson.objects.all()
+        
         if person_id == None:
             return FavPerson.objects.filter(user_id=user.id)
-        return FavPerson.objects.filter(user_id=user.id, person_id=person_id)
+        
+        result = FavPerson.objects.filter(user_id=user.id, person_id=person_id)
+        print("PRINTING RESULT:", result.query)
+        return result
     
     def perform_create(self, serializer):
         user = User.objects.get(id=self.request.user.id)
@@ -115,11 +123,16 @@ class ListEntryViewSet(ModelViewSet):
     pagination_class = DefaultPagination
     serializer_class = ListEntrySerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    ordering_fields = ['rating', 'date_watched', 'movie_title']
+    ordering_fields = ['rating', 'date_watched', 'movie_title', 'simplified_rating']
     search_fields = ['rating', 'date_watched', 'movie_title']
 
     def get_queryset(self):
         user = self.request.user
+
+        # Debugging purposes (no authentication)
+        # if not self.request.user.is_authenticated:
+        #     return ListEntry.objects.all()
+
         return ListEntry.objects.filter(user_id=user.id)
     
     def create(self, request, *args, **kwargs):
@@ -138,8 +151,7 @@ class ListEntryViewSet(ModelViewSet):
         entry = EntryID()
         setattr(entry, 'movie_id', data.get('movie_id'))
         add_people_to_database(entry)
-        
-        # Call the default 'create' behavior to save the object
+
         return super().create(request, *args, **kwargs)
     
 

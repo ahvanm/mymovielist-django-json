@@ -27,7 +27,7 @@ class FavPerson(models.Model):
     
 
 class FavFilmsOfPerson(models.Model):
-    favPerson = models.ForeignKey('FavPerson', on_delete = models.CASCADE)
+    favPerson = models.ForeignKey('FavPerson', on_delete = models.CASCADE, related_name='fav_persons')
     listEntry = models.ForeignKey('ListEntry', on_delete = models.CASCADE)
 
     def __str__(self) -> str:
@@ -52,6 +52,9 @@ class ListEntry(models.Model):
     date_watched = models.DateField(null = True)
     comments = models.TextField(null = True)
     poster_url = models.CharField(max_length=255, null = True)
+    
+    CHOICES = [(1, "Bad"), (2, "Below Average"), (3, "Decent"), (4, "Great"), (5, "Amazing")]
+    simplified_rating = models.SmallIntegerField(choices=CHOICES, default=3)
 
     def __str__(self) -> str:
         return f"{self.user.username}: '{self.movie_id}'"
