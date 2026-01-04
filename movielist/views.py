@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render, get_list_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.db import connection, transaction
 from django.db.models import Avg, Max, Min
+from movielist.filters import StableOrderingFilter
 from movielist.models import ListEntry
 from .forms import *
 from .models import *
@@ -122,7 +123,7 @@ class ListEntryViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = DefaultPagination
     serializer_class = ListEntrySerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, StableOrderingFilter]
     ordering_fields = ['rating', 'date_watched', 'movie_title', 'simplified_rating']
     search_fields = ['rating', 'date_watched', 'movie_title']
 
@@ -133,7 +134,7 @@ class ListEntryViewSet(ModelViewSet):
         # if not self.request.user.is_authenticated:
         #     return ListEntry.objects.all()
 
-        return ListEntry.objects.filter(user_id=user.id)
+        return ListEntry.objects.filter(user_id=user.id).order_by('movie_title')
     
     def create(self, request, *args, **kwargs):
         # Custom behavior before saving the entry
